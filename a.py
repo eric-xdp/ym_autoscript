@@ -111,6 +111,8 @@ class ReadExcel():
         sheet = self.excel_writer.book[sheet_name]
         self.excel_writer.book.remove(sheet)
         self.save()
+
+
 class MyRules():
 
     def __init__(self):
@@ -136,22 +138,23 @@ class MyRules():
 
     def send_class(self, col):
         wechat = WeChatRun()
-        my_excel = ReadExcel('test.xlsx')
+        my_excel = ReadExcel('test1.xlsx')
         my_data = pd.DataFrame(my_excel.get_data('开课通知'))
         # 获取需要发送的群列表,和开课通知
         for group in my_data[col].tolist():
-            wechat.get_search(group)
-            wechat.send_message(my_data[4][0])
+            print(group)
+            if group == 'nan':continue
+            # wechat.get_search(group)
+            # wechat.send_message(my_data[4][0])
             logging.info("%s: 开课通知发送成功" % group)
 
     def send_cost(self, weekday):
         wechat = WeChatRun()
-        my_excel = ReadExcel('test.xlsx')
+        my_excel = ReadExcel('test1.xlsx')
         my_data = pd.DataFrame(my_excel.get_data('耗课通知'), columns=['剩余课', '姓名', '昵称', '已上', '已购', '群名字', '所属班级', '通知时间', '是否通知'])
         # 获取需要通知的所有数据
         last_data = my_excel.get_row(my_excel.get_row(my_data, '是', '是否通知'), weekday, '通知时间')
         sheet = my_excel.book['耗课通知']
-        print(my_data)
         for data in last_data.values:
             wechat.get_search(data[5])
             # 被通知的用户，设置自动减1.
@@ -159,9 +162,10 @@ class MyRules():
             print(msg)
             # 剩余课时数减1 ，通过openpyxl 修改sheet中神域课时列对应的课时值
             sheet.cell(my_data[my_data['姓名'] == data[1]].index.values[0] + 2, 1).value -= 1
-            my_excel.book.save('test.xlsx')
+            my_excel.book.save('test1.xlsx')
             wechat.send_message(msg)
             logging.info("%s: 耗课通知发送成功" % data[5])
+
 
 
 def main():
@@ -170,13 +174,11 @@ def main():
     while True:
         # 周五
         if datetime.datetime.now().weekday() == 4:
-
             if my_rules.is_send():
                 if time.localtime(time.time()).tm_hour == 9:
                     my_rules.send_class(col=1)
                 if time.localtime(time.time()).tm_hour == 21:
                     my_rules.send_cost(weekday='周五21:00')
-
         # 周六
         if datetime.datetime.now().weekday() == 5:
             # 获取周五需要发送的群列表,和开课通知
@@ -208,10 +210,8 @@ def main():
             logging.info('pong pong pong ~')
             rate = 0
 
-if __name__ == '__main__':
 
-    main()
-    # my_rules = MyRules()
-    # my_rules.send_cost('周五21:00')
-    # re = ReadExcel('test.xlsx')
-    # re.delete_sheet('耗课通知')
+if __name__ == '__main__':
+    # main()
+    mr = MyRules()
+    mr.send_class(1)
